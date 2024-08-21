@@ -100,60 +100,133 @@ class UserManagement(Document):
 
 
 
+# @frappe.whitelist()
+# def user_to_user():
+# 	# Sync core user data to User Management
+# 	core_users = frappe.get_all("User", fields=["name", "email", "full_name", "first_name", "last_name",
+# 												"middle_name", "gender", "enabled", "birth_date", 
+# 												"send_welcome_email", "mobile_no", "new_password"])
+
+# 	for core_user in core_users:
+# 		if core_user.first_name in ["Guest", "Administrator", "Account", "Pankaj"]:
+# 			continue
+
+# 		# Fetching role profiles for the current user
+# 		role_profiles = frappe.get_all("User Role Profile", filters={"parent": core_user.name},
+# 									fields=["role_profile"])
+# 		role_profile_names = [role["role_profile"] for role in role_profiles]
+		
+# 		user_management = frappe.get_all("User Management", filters={"email": core_user.email}, fields=["name"])
+		
+# 		if any(core_user.email == user_info['name'] for user_info in user_management):
+# 			continue
+# 		elif user_management:
+# 			# Update existing User Management
+# 			existing_user_management = frappe.get_doc("User Management", user_management[0].name)
+# 			existing_user_management.update({
+# 				"full_name": core_user.full_name,
+# 				"first_name": core_user.first_name,
+# 				"last_name": core_user.last_name,
+# 				"middle_name": core_user.middle_name,
+# 				"gender": core_user.gender,
+# 				"enabled": core_user.enabled,
+# 				"date_of_birth": core_user.birth_date,
+# 				"send_welcome_email": core_user.send_welcome_email,
+# 				"mobile_no": core_user.mobile_no,
+# 				"role": [{"role_profile": role_profile} for role_profile in role_profile_names]
+# 			})
+# 			existing_user_management.save()
+# 		else:
+# 			# Create a new User Management if it doesn't exist
+# 			new_user_management = frappe.new_doc("User Management")
+# 			new_user_management.update({
+# 				"email": core_user.email,
+# 				"full_name": core_user.full_name,
+# 				"first_name": core_user.first_name,
+# 				"last_name": core_user.last_name,
+# 				"middle_name": core_user.middle_name,
+# 				"gender": core_user.gender,
+# 				"enabled": core_user.enabled,
+# 				"date_of_birth": core_user.birth_date,
+# 				"send_welcome_email": core_user.send_welcome_email,
+# 				"mobile_no": core_user.mobile_no,
+# 				"password": "NULL",
+# 				"role": [{"role_profile": role_profile} for role_profile in role_profile_names]
+# 			})
+# 			new_user_management.insert()
+# 			new_user_management.submit()
+# 	return {"status": "Users Synced"}
+
+
+
+
 @frappe.whitelist()
 def user_to_user():
-	# Sync core user data to User Management
-	core_users = frappe.get_all("User", fields=["name", "email", "full_name", "first_name", "last_name",
-												"middle_name", "gender", "enabled", "birth_date", 
-												"send_welcome_email", "mobile_no", "new_password"])
+    # Fetch all core user data
+    core_users = frappe.get_all("User", fields=["name", "email", "full_name", "first_name", "last_name",
+                                                "middle_name", "gender", "enabled", "birth_date", 
+                                                "send_welcome_email", "mobile_no"])
 
-	for core_user in core_users:
-		if core_user.first_name in ["Guest", "Administrator", "Account", "Pankaj"]:
-			continue
+    for core_user in core_users:
+        # Skip specific users
+        if core_user.first_name in ["Guest", "Administrator", "Account", "Pankaj"]:
+            continue
 
-		# Fetching role profiles for the current user
-		role_profiles = frappe.get_all("User Role Profile", filters={"parent": core_user.name},
-									fields=["role_profile"])
-		role_profile_names = [role["role_profile"] for role in role_profiles]
-		
-		lsa_user = frappe.get_all("User Management", filters={"email": core_user.email}, fields=["name"])
-		
-		if any(core_user.email == user_info['name'] for user_info in lsa_user):
-			continue
-		elif lsa_user:
-			# Update existing User Management
-			existing_lsa_user = frappe.get_doc("User Management", lsa_user[0].name)
-			existing_lsa_user.update({
-				"full_name": core_user.full_name,
-				"first_name": core_user.first_name,
-				"last_name": core_user.last_name,
-				"middle_name": core_user.middle_name,
-				"gender": core_user.gender,
-				"enabled": core_user.enabled,
-				"date_of_birth": core_user.birth_date,
-				"send_welcome_email": core_user.send_welcome_email,
-				"mobile_no": core_user.mobile_no,
-				"role": [{"role_profile": role_profile} for role_profile in role_profile_names]
-			})
-			existing_lsa_user.save()
-		else:
-			# Create a new User Management if it doesn't exist
-			new_lsa_user = frappe.new_doc("User Management")
-			new_lsa_user.update({
-				"email": core_user.email,
-				"full_name": core_user.full_name,
-				"first_name": core_user.first_name,
-				"last_name": core_user.last_name,
-				"middle_name": core_user.middle_name,
-				"gender": core_user.gender,
-				"enabled": core_user.enabled,
-				"date_of_birth": core_user.birth_date,
-				"send_welcome_email": core_user.send_welcome_email,
-				"mobile_no": core_user.mobile_no,
-				"password": "NULL",
-				"role": [{"role_profile": role_profile} for role_profile in role_profile_names]
-			})
-			new_lsa_user.insert()
-			new_lsa_user.submit()
-	return {"status": "Users Synced"}
+        # Fetch role profiles for the current user
+        role_profiles = frappe.get_all("User Role Profile", filters={"parent": core_user.name},
+                                       fields=["role_profile"])
+        role_profile_names = [role["role_profile"] for role in role_profiles]
 
+        # Check if the user already exists in User Management
+        user_management = frappe.get_all("User Management", filters={"email": core_user.email}, fields=["name"])
+
+        if user_management:
+            # Update existing User Management record
+            existing_user_management = frappe.get_doc("User Management", user_management[0].name)
+
+            # Clear existing roles
+            existing_user_management.set('role', [])
+
+            # Add new roles without duplication
+            for role_profile in role_profile_names:
+                if not any(r.role_profile == role_profile for r in existing_user_management.role):
+                    existing_user_management.append('role', {"role_profile": role_profile})
+
+            # Update other fields
+            existing_user_management.update({
+                "full_name": core_user.full_name,
+                "first_name": core_user.first_name,
+                "last_name": core_user.last_name,
+                "middle_name": core_user.middle_name,
+                "gender": core_user.gender,
+                "enabled": core_user.enabled,
+                "date_of_birth": core_user.birth_date,
+                "send_welcome_email": core_user.send_welcome_email,
+                "mobile_no": core_user.mobile_no,
+            })
+
+            # Save the updated document
+            existing_user_management.save()
+            frappe.db.commit()
+
+        else:
+            # Create a new User Management record
+            new_user_management = frappe.new_doc("User Management")
+            new_user_management.update({
+                "email": core_user.email,
+                "full_name": core_user.full_name,
+                "first_name": core_user.first_name,
+                "last_name": core_user.last_name,
+                "middle_name": core_user.middle_name,
+                "gender": core_user.gender,
+                "enabled": core_user.enabled,
+                "date_of_birth": core_user.birth_date,
+                "send_welcome_email": core_user.send_welcome_email,
+                "mobile_no": core_user.mobile_no,
+                "password": "NULL",  # or you can set it to core_user.new_password if needed
+                "role": [{"role_profile": role_profile} for role_profile in role_profile_names]
+            })
+            new_user_management.insert()
+            new_user_management.submit()
+
+    return {"status": "Users Synced"}
